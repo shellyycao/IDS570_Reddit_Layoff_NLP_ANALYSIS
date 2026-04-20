@@ -1,0 +1,21 @@
+entity,count
+"('AI', 'ORG')",888
+"('first', 'ORDINAL')",449
+"('one', 'CARDINAL')",395
+"('US', 'GPE')",269
+"('2', 'CARDINAL')",254
+"('3', 'CARDINAL')",212
+"('two', 'CARDINAL')",203
+"('Amazon', 'ORG')",183
+"('1', 'CARDINAL')",178
+"('today', 'DATE')",170
+"('One', 'CARDINAL')",127
+"('Oracle', 'ORG')",111
+"('second', 'ORDINAL')",110
+"('India', 'GPE')",108
+"('Microsoft', 'ORG')",99
+"('Meta', 'ORG')",93
+"('years', 'DATE')",92
+"('last year', 'DATE')",87
+"('American', 'NORP')",83
+"('half', 'CARDINAL')",81

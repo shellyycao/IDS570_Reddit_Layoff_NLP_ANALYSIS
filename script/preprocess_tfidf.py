@@ -15,31 +15,12 @@ INPUT_FILE  = os.path.join("processed", "text_clean.csv")
 OUTPUT_FILE = os.path.join("processed", "text_tfidf.csv")
 
 CUSTOM_STOPWORDS = [
-    # Generic Reddit filler words
-    "going", "make", "said", "want", "also", "one", "even",
-    "still", "back", "every", "thing", "way", "lot",
-    "good", "great", "bad", "big", "real", "well", "better", "less",
-    "most", "those", "these", "some", "any",
-
-    # Time words too generic to be useful
-    "time", "day", "month", "year",
-
-    # Generic action words
-    "get", "got", "like", "just",
-
-    # Generic people/subject words
-    "people", "guy", "someone", "everyone", "anyone",
-
-    # Generic work words that appear across ALL categories equally
-    "work", "job", "company",
-
-    # Added round 2
-    "000", "im", "dont", "cant", "wont", "didnt", "wasnt", "isnt",
-    "ive", "id", "go", "got", "get", "getting", "us", "new", "know",
-    "think", "take", "feel", "need", "would", "much", "really", "something",
-
-    # Added round 3
-    "youre", "could", "never", "keep", "says", "sounds",
+    # Contraction fragments (no apostrophe — NLTK only strips the apostrophe versions)
+    "im", "ive", "id", "youre", "theyre", "hes", "shes", "weve",
+    "dont", "cant", "wont", "didnt", "wasnt", "isnt", "wouldnt",
+    "couldnt", "shouldnt", "doesnt", "hadnt", "havent", "hasnt",
+    # Number / encoding artifacts
+    "000",
 ]
 
 

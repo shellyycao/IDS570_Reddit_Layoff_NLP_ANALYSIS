@@ -1,11 +1,21 @@
-import pandas as pd
 import os
+import pandas as pd
 
-DATA_DIR = "data_ready"
+DATA_DIR  = "data_ready"
 MAIN_FILE = os.path.join(DATA_DIR, "layoffs_reddit_data.csv")
 
+STOPWORDS = {
+    "the","a","an","is","it","in","on","at","to","of","and","or","but",
+    "with","for","this","that","was","are","be","have","has","had",
+    "i","you","he","she","they","we","my","your","his","her","their",
+    "just","like","really","so","very","also","do","did","not","no",
+    "if","can","will","would","could","should","what","how","when",
+    "get","got","think","know","people","one","don","t","s","re","ve",
+    "deleted","removed","www","http","reddit","com","amp",
+    "layoff","layoffs","laid","lay","job","jobs","cut","cuts",
+    "work","company","companies","employee","employees","fired","firing",
+}
 
-# ── Output helpers ────────────────────────────────────────────────────────────
 
 def generate_wordclouds(df):
     try:
@@ -15,28 +25,16 @@ def generate_wordclouds(df):
         print("Run: pip install wordcloud matplotlib")
         return
 
-    stopwords = {
-        "the","a","an","is","it","in","on","at","to","of","and","or","but",
-        "with","for","this","that","was","are","be","have","has","had",
-        "i","you","he","she","they","we","my","your","his","her","their",
-        "just","like","really","so","very","also","do","did","not","no",
-        "if","can","will","would","could","should","what","how","when",
-        "get","got","think","know","people","one","don","t","s","re","ve",
-        "deleted","removed","www","http","reddit","com","amp",
-        "layoff","layoffs","laid","lay","job","jobs","cut","cuts",
-        "work","company","companies","employee","employees","fired","firing",
-    }
-
+    os.makedirs(os.path.join("image", "wordcloud"), exist_ok=True)
     for label, group in df.groupby("label"):
         corpus = " ".join(group["text"].dropna().astype(str))
         wc = WordCloud(
             width=1200, height=600,
             background_color="white",
-            stopwords=stopwords,
+            stopwords=STOPWORDS,
             max_words=150,
             colormap="viridis",
         ).generate(corpus)
-
         fname = os.path.join("image", "wordcloud", f"wordcloud_{label}.png")
         plt.figure(figsize=(12, 6))
         plt.imshow(wc, interpolation="bilinear")
@@ -49,8 +47,7 @@ def generate_wordclouds(df):
 
 
 def print_summary(df):
-    print("\n── Summary ──────────────────────────────────")
-    print("By discourse group (label):")
+    print("\nBy label:")
     for k, v in sorted(df["label"].value_counts().items()):
         print(f"  {k:30s}: {v}")
     print("\nBy subreddit:")
@@ -60,34 +57,32 @@ def print_summary(df):
     for k, v in sorted(df["time_period"].value_counts().items(), key=lambda x: str(x[0])):
         print(f"  {str(k):10s}: {v}")
 
-# Collect all CSV files except the main file
-source_files = [
-    os.path.join(DATA_DIR, f)
-    for f in os.listdir(DATA_DIR)
-    if f.endswith(".csv") and f != "layoffs_reddit_data.csv"
-]
 
-print(f"Found {len(source_files)} files to append:")
-for f in sorted(source_files):
-    print(f"  {f}")
+def main():
+    source_files = [
+        os.path.join(DATA_DIR, f)
+        for f in os.listdir(DATA_DIR)
+        if f.endswith(".csv") and f != "layoffs_reddit_data.csv"
+    ]
+    print(f"Found {len(source_files)} per-subreddit files")
 
-# Load all source files and combine (do NOT re-read the main file to avoid double-counting)
-appended = []
-for f in sorted(source_files):
-    df = pd.read_csv(f)
-    print(f"  Loading {os.path.basename(f)}: {len(df)} rows")
-    appended.append(df)
+    frames = []
+    for f in sorted(source_files):
+        df = pd.read_csv(f)
+        print(f"  {os.path.basename(f)}: {len(df)} rows")
+        frames.append(df)
 
-combined = pd.concat(appended, ignore_index=True)
-print(f"\nCombined total rows (before dedup): {len(combined)}")
+    combined = pd.concat(frames, ignore_index=True)
+    print(f"\nCombined before dedup: {len(combined)} rows")
+    combined.drop_duplicates(subset="id", inplace=True)
+    print(f"After dedup: {len(combined)} rows")
 
-# Deduplicate by 'id' column (unique post/comment identifier)
-combined.drop_duplicates(subset="id", inplace=True)
-print(f"Rows after deduplication: {len(combined)}")
+    combined.to_csv(MAIN_FILE, index=False)
+    print(f"Saved → {MAIN_FILE}")
 
-# Save back to the main file
-combined.to_csv(MAIN_FILE, index=False)
-print(f"\nSaved to {MAIN_FILE}")
+    print_summary(combined)
+    generate_wordclouds(combined)
 
-print_summary(combined)
-generate_wordclouds(combined)
+
+if __name__ == "__main__":
+    main()

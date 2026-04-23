@@ -9,10 +9,11 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-CLUSTER_FILE = os.path.join("processed", "bert", "bert_clusters.csv")
-TFIDF_FILE   = os.path.join("processed", "text_tfidf.csv")
-EMB_FILE     = os.path.join("processed", "bert", "bert_embeddings.npy")
-OUT_DIR      = os.path.join("processed", "classification")
+ROOT_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CLUSTER_FILE = os.path.join(ROOT_DIR, "processed", "bert", "bert_clusters.csv")
+TFIDF_FILE   = os.path.join(ROOT_DIR, "processed", "text_tfidf.csv")
+EMB_FILE     = os.path.join(ROOT_DIR, "processed", "bert", "bert_embeddings.npy")
+OUT_DIR      = os.path.join(ROOT_DIR, "processed", "classification")
 
 LABEL_MAP = {
     "personal_experience": 0,

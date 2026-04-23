@@ -20,10 +20,11 @@ from sklearn.metrics import (
     accuracy_score, classification_report, confusion_matrix
 )
 
-IN_DIR   = os.path.join("processed", "classification")
-IMG_DIR  = os.path.join("image", "classification")
-MDL_DIR  = "models"
-OUT_DIR  = os.path.join("processed", "classification")
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+IN_DIR   = os.path.join(ROOT_DIR, "processed", "classification")
+IMG_DIR  = os.path.join(ROOT_DIR, "image", "classification")
+MDL_DIR  = os.path.join(ROOT_DIR, "models")
+OUT_DIR  = os.path.join(ROOT_DIR, "processed", "classification")
 
 LABEL_NAMES = ["personal_experience", "media_public", "worker_perspective"]
 RANDOM_STATE = 42

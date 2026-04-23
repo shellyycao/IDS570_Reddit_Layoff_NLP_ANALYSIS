@@ -11,9 +11,10 @@ import pandas as pd
 import torch
 from transformers import BertTokenizer, BertModel
 
-INPUT_FILE   = os.path.join("processed", "text_clean.csv")
-EMB_FILE     = os.path.join("processed", "bert", "bert_embeddings.npy")
-META_FILE    = os.path.join("processed", "bert", "bert_metadata.csv")
+ROOT_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+INPUT_FILE   = os.path.join(ROOT_DIR, "processed", "text_clean.csv")
+EMB_FILE     = os.path.join(ROOT_DIR, "processed", "bert", "bert_embeddings.npy")
+META_FILE    = os.path.join(ROOT_DIR, "processed", "bert", "bert_metadata.csv")
 
 KEYWORD_PAT  = re.compile(r"\blayoffs?\b|\blaid off\b", re.IGNORECASE)
 SENT_SPLIT   = re.compile(r"(?<=[.!?])\s+")

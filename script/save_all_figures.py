@@ -1,6 +1,5 @@
 """
 Regenerates and saves all notebook visualizations to the image/ directory.
-Run from the project root: python script/save_all_figures.py
 """
 
 import ast
@@ -9,6 +8,9 @@ import pickle
 import re
 import warnings
 from collections import Counter
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(ROOT_DIR)
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -37,7 +39,7 @@ LABEL_NAMES = ["personal_experience", "media_public", "worker_perspective"]
 # ── Load main dataframe ───────────────────────────────────────────────────────
 df = pd.read_csv("processed/text_tfidf.csv")
 df["time_period"] = df["time_period"].astype(str)
-EXCLUDE_PERIODS = {"2009","2011","2012","2013","2014","2015","2016","2017","2018","2019","other"}
+EXCLUDE_PERIODS = {"2009","2011","2012","2013","2014","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","other"}
 df = df[~df["time_period"].isin(EXCLUDE_PERIODS)].reset_index(drop=True)
 print(f"Main df: {df.shape}")
 
@@ -60,6 +62,10 @@ ax.set_ylabel("Row count")
 ax.set_title("Row count by subreddit, colored by label")
 ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
 ax.legend(title="Label", bbox_to_anchor=(1.01, 1), loc="upper left")
+totals = pivot.sum(axis=1)
+for i, total in enumerate(totals):
+    ax.text(i, total + totals.max() * 0.01, f'{int(total):,}',
+            ha='center', va='bottom', fontsize=9, fontweight='bold', color='#333')
 plt.tight_layout()
 plt.savefig("image/eda/subreddit_label_counts.png", dpi=150)
 plt.close()
@@ -76,9 +82,19 @@ kw_sub.plot(kind="bar", ax=axes[0], color=sns.color_palette("Blues_d", len(kw_su
 axes[0].set_title("Keyword hits by subreddit")
 axes[0].set_ylabel("Total occurrences")
 axes[0].set_xticklabels(axes[0].get_xticklabels(), rotation=30, ha="right")
+for bar in axes[0].patches:
+    h = bar.get_height()
+    if h > 0:
+        axes[0].text(bar.get_x() + bar.get_width() / 2, h + kw_sub.max() * 0.015,
+                     f'{int(h):,}', ha='center', va='bottom', fontsize=8)
 kw_label.plot(kind="bar", ax=axes[1], color=[LABEL_COLORS[l] for l in LABEL_ORDER])
 axes[1].set_title("Keyword hits by label")
 axes[1].set_xticklabels(axes[1].get_xticklabels(), rotation=20, ha="right")
+for bar in axes[1].patches:
+    h = bar.get_height()
+    if h > 0:
+        axes[1].text(bar.get_x() + bar.get_width() / 2, h + kw_label.max() * 0.015,
+                     f'{int(h):,}', ha='center', va='bottom', fontsize=9)
 fig.suptitle('Occurrences of "layoff", "layoffs", "laid off" in text_clean')
 plt.tight_layout()
 plt.savefig("image/eda/keyword_hits.png", dpi=150)
@@ -132,7 +148,7 @@ plt.close()
 print("Saved: image/eda/tfidf_top_terms_per_subreddit.png")
 
 # Volume by time period
-period_order = ["2020", "2021", "2022", "2023", "2024", "2025", "2026"]
+period_order = ["2025", "2026"]
 vol = df.groupby("time_period").size().reindex(period_order, fill_value=0)
 fig, ax = plt.subplots(figsize=(9, 4))
 vol.plot(kind="bar", ax=ax, color=sns.color_palette("Blues_d", len(vol)), edgecolor="none")
@@ -140,6 +156,11 @@ ax.set_xlabel("Time period")
 ax.set_ylabel("Row count")
 ax.set_title("Post/comment volume by time period")
 ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
+for bar in ax.patches:
+    h = bar.get_height()
+    if h > 0:
+        ax.text(bar.get_x() + bar.get_width() / 2, h + vol.max() * 0.01,
+                f'{int(h):,}', ha='center', va='bottom', fontsize=9, fontweight='bold')
 plt.tight_layout()
 plt.savefig("image/eda/volume_by_period.png", dpi=150)
 plt.close()
@@ -151,10 +172,25 @@ vec_cs = TfidfVectorizer(max_features=10000, ngram_range=(1, 2))
 mat_cs = vec_cs.fit_transform(agg)
 sim = cosine_similarity(mat_cs)
 sim_df = pd.DataFrame(sim, index=agg.index, columns=agg.index)
-fig, ax = plt.subplots(figsize=(8, 6))
-sns.heatmap(sim_df, annot=True, fmt=".2f", cmap="YlOrRd", vmin=0, vmax=1,
+HIGHLIGHT_THRESH = 0.60
+fig, ax = plt.subplots(figsize=(9, 7))
+sns.heatmap(sim_df, annot=False, cmap="YlOrRd", vmin=0, vmax=1,
             linewidths=0.5, ax=ax, cbar_kws={"label": "Cosine similarity"})
-ax.set_title("Cosine similarity between subreddits (aggregated TF-IDF)")
+for i in range(sim_df.shape[0]):
+    for j in range(sim_df.shape[1]):
+        val = sim_df.iloc[i, j]
+        is_sig = (i != j) and val >= HIGHLIGHT_THRESH
+        text_color = "white" if val > 0.55 else "#222"
+        label_text = f"★{val:.2f}" if is_sig else f"{val:.2f}"
+        ax.text(j + 0.5, i + 0.5, label_text,
+                ha="center", va="center",
+                fontsize=10 if is_sig else 9,
+                fontweight="bold" if is_sig else "normal",
+                color="white" if is_sig else text_color)
+ax.set_title(
+    "Cosine Similarity Between Subreddits (Aggregated TF-IDF)\n★ = significant similarity ≥ 0.60",
+    fontsize=12
+)
 ax.set_xticklabels(ax.get_xticklabels(), rotation=35, ha="right")
 ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
 plt.tight_layout()
@@ -187,6 +223,12 @@ top_types = pd.DataFrame(
 fig, ax = plt.subplots(figsize=(8, 5))
 top_types.plot(kind="barh", x="entity_type", y="count", ax=ax,
                color=sns.color_palette("Blues_d", len(top_types)), legend=False)
+for bar in ax.patches:
+    w = bar.get_width()
+    if w > 0:
+        ax.text(w + top_types["count"].max() * 0.01, bar.get_y() + bar.get_height() / 2,
+                f'{int(w):,}', ha='left', va='center', fontsize=9)
+ax.set_xlim(right=top_types["count"].max() * 1.15)
 ax.set_title("Top 10 Entity Types Across Full Corpus", fontsize=13)
 ax.set_xlabel("Total occurrences")
 ax.set_ylabel("")
@@ -203,6 +245,12 @@ for ax, label in zip(axes, LABEL_ORDER):
     top = pd.DataFrame(Counter(orgs).most_common(15), columns=["org", "count"])
     top.sort_values("count").plot(kind="barh", x="org", y="count", ax=ax,
                                   color=LABEL_COLORS[label], legend=False)
+    for bar in ax.patches:
+        w = bar.get_width()
+        if w > 0:
+            ax.text(w + top["count"].max() * 0.01, bar.get_y() + bar.get_height() / 2,
+                    f'{int(w)}', ha='left', va='center', fontsize=7.5)
+    ax.set_xlim(right=top["count"].max() * 1.2)
     ax.set_title(label.replace("_", " ").title(), fontsize=12)
     ax.set_xlabel("Count")
     ax.set_ylabel("")
@@ -308,33 +356,77 @@ for name, res in results.items():
     plt.close()
     print(f"Saved: image/classification/confusion_matrix_{fname}.png")
 
-# TF-IDF feature weights
+# TF-IDF feature weights — redesigned: 1×3 layout, top 10, value labels, section shading
 feature_names = vec.get_feature_names_out()
 coef = lr_tfidf.coef_
-TOP_N = 15
+TOP_N = 10  # top 10 each direction for readability
 
-fig, axes = plt.subplots(3, 1, figsize=(12, 15))
+POS_COLOR = "#C44E52"  # red  → pushes toward class
+NEG_COLOR = "#4C72B0"  # blue → pushes away from class
+
+fig, axes = plt.subplots(1, 3, figsize=(20, 8))
 for i, (label, ax) in enumerate(zip(LABEL_NAMES, axes)):
     weights = coef[i]
-    top_pos = np.argsort(weights)[-TOP_N:][::-1]
-    top_neg = np.argsort(weights)[:TOP_N]
-    top_idx = np.concatenate([top_neg, top_pos[::-1]])
-    top_feats = feature_names[top_idx]
-    top_vals = weights[top_idx]
-    colors = ["#d62728" if v > 0 else "#1f77b4" for v in top_vals]
-    ax.barh(range(len(top_feats)), top_vals, color=colors, edgecolor="none")
-    ax.set_yticks(range(len(top_feats)))
-    ax.set_yticklabels(top_feats, fontsize=9)
-    ax.axvline(0, color="black", linewidth=0.8)
-    ax.set_title(f"{label.replace('_', ' ').title()}: top {TOP_N} positive / negative weights", fontsize=12)
-    ax.set_xlabel("Coefficient")
-axes[0].legend(handles=[
-    Patch(color="#d62728", label="Positive (toward class)"),
-    Patch(color="#1f77b4", label="Negative (away from class)"),
-], fontsize=9)
-plt.suptitle("TF-IDF LR Feature Weights per Class", fontsize=14, y=1.01)
+    top_pos_idx = np.argsort(weights)[-TOP_N:][::-1]   # most positive first
+    top_neg_idx = np.argsort(weights)[:TOP_N]           # most negative first
+
+    pos_vals  = weights[top_pos_idx]
+    neg_vals  = weights[top_neg_idx]
+    pos_feats = feature_names[top_pos_idx]
+    neg_feats = feature_names[top_neg_idx]
+
+    gap   = 3
+    y_neg = np.arange(TOP_N)                          # 0–9   (away from class)
+    y_pos = np.arange(TOP_N + gap, 2 * TOP_N + gap)  # 13–22 (toward class)
+
+    # Section background shading
+    ax.axhspan(y_neg[0] - 0.6, y_neg[-1] + 0.6, facecolor=NEG_COLOR, alpha=0.06, zorder=0)
+    ax.axhspan(y_pos[0] - 0.6, y_pos[-1] + 0.6, facecolor=POS_COLOR, alpha=0.06, zorder=0)
+
+    neg_bars = ax.barh(y_neg, neg_vals, color=NEG_COLOR, alpha=0.75, height=0.65, edgecolor='white')
+    pos_bars = ax.barh(y_pos, pos_vals, color=POS_COLOR, alpha=0.75, height=0.65, edgecolor='white')
+
+    ax.set_yticks(list(y_neg) + list(y_pos))
+    ax.set_yticklabels(
+        [f.replace('_', ' ') for f in neg_feats] + [f.replace('_', ' ') for f in pos_feats],
+        fontsize=8.5
+    )
+
+    x_range = max(abs(pos_vals.max()), abs(neg_vals.min()))
+    offset  = x_range * 0.03
+    for bar in neg_bars:
+        w = bar.get_width()
+        ax.text(w - offset, bar.get_y() + bar.get_height() / 2,
+                f'{w:.3f}', ha='right', va='center', fontsize=7.5,
+                color='white', fontweight='bold')
+    for bar in pos_bars:
+        w = bar.get_width()
+        ax.text(w + offset, bar.get_y() + bar.get_height() / 2,
+                f'{w:.3f}', ha='left', va='center', fontsize=7.5, color=POS_COLOR)
+
+    ax.axvline(0, color='#333', linewidth=1.2, zorder=2)
+    mid_y = (y_neg[-1] + y_pos[0]) / 2
+    ax.axhline(mid_y, color='#ccc', linewidth=0.8, linestyle='--')
+
+    # Section header labels
+    ax.text(neg_vals.min() * 0.55, y_neg.mean(), "← Away from class",
+            va='center', ha='center', fontsize=8, color=NEG_COLOR, fontstyle='italic')
+    ax.text(pos_vals.max() * 0.55, y_pos.mean(), "Toward class →",
+            va='center', ha='center', fontsize=8, color=POS_COLOR, fontstyle='italic')
+
+    ax.set_title(label.replace('_', ' ').title(), fontsize=13, fontweight='bold', pad=10)
+    ax.set_xlabel("Logistic Regression Coefficient", fontsize=9)
+    ax.grid(axis='x', linewidth=0.4, alpha=0.4)
+    ax.spines[['top', 'right']].set_visible(False)
+
+fig.legend(handles=[
+    Patch(color=POS_COLOR, alpha=0.75, label='Positive → pushes toward class'),
+    Patch(color=NEG_COLOR, alpha=0.75, label='Negative → pushes away from class'),
+], loc='lower center', ncol=2, fontsize=10, bbox_to_anchor=(0.5, -0.03))
+plt.suptitle("TF-IDF Logistic Regression — Feature Weights per Class  (top 10 each direction)",
+             fontsize=14, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.savefig("image/classification/tfidf_feature_weights.png", dpi=150)
+plt.savefig("image/classification/tfidf_feature_weights.png", dpi=150, bbox_inches='tight')
 plt.close()
 print("Saved: image/classification/tfidf_feature_weights.png")
 
@@ -345,7 +437,7 @@ print("Saved: image/classification/tfidf_feature_weights.png")
 w2v = pd.read_csv("processed/layoffs_sentiment_w2v.csv")
 w2v["datetime"] = pd.to_datetime(w2v["created_utc"], unit="s", errors="coerce")
 w2v["year"] = w2v["datetime"].dt.year.astype("Int64")
-valid_years = [2021, 2022, 2023, 2024, 2025, 2026]
+valid_years = [2022, 2023, 2024, 2025, 2026]
 w2v = w2v[w2v["year"].isin(valid_years)].copy()
 
 # Box plot by label
@@ -429,7 +521,7 @@ plt.close()
 print("Saved: image/sentiment/sentiment_over_time.png")
 
 # Volume over time (from main df)
-period_order = ["2020", "2021", "2022", "2023", "2024", "2025", "2026"]
+period_order = ["2025", "2026"]
 vol_label = df.groupby(["time_period", "label"]).size().unstack(fill_value=0).reindex(period_order, fill_value=0)
 fig, ax = plt.subplots(figsize=(11, 5))
 for label in LABEL_ORDER:
@@ -495,25 +587,61 @@ plt.savefig("image/sentiment/posts_vs_comments_sentiment.png", dpi=150)
 plt.close()
 print("Saved: image/sentiment/posts_vs_comments_sentiment.png")
 
-# AI mention trend
-df["has_ai"] = df["text_clean"].str.contains(
-    r"\b(ai|artificial intelligence|automation|chatgpt|llm)\b", case=False, regex=True
+# AI mention trend — distinct style with spike highlighting
+# Use w2v data (2020-2026) so the trend covers the full historical range
+ai_src = w2v.copy()
+ai_src["time_period"] = ai_src["year"].astype(str)
+ai_src["has_ai"] = ai_src["text_clean"].str.contains(
+    r"(?<![a-zA-Z])(ai|artificial intelligence|automation|chatgpt|llm)(?![a-zA-Z])",
+    case=False, regex=True
 )
 ai_trend = (
-    df[df["time_period"].isin([str(y) for y in range(2020, 2027)])]
+    ai_src[ai_src["time_period"].isin([str(y) for y in range(2020, 2027)])]
     .groupby(["time_period", "label"])["has_ai"]
     .mean().unstack().reindex(columns=LABEL_ORDER)
 )
+AI_TREND_COLORS = {
+    "media_public":        "#E15759",
+    "personal_experience": "#4E79A7",
+    "worker_perspective":  "#F28E2B",
+}
+x_labels = ai_trend.index.tolist()
+x_pos    = np.arange(len(x_labels))
+
 fig, ax = plt.subplots(figsize=(11, 5))
+ax.set_facecolor('#FAFAFA')
 for label in LABEL_ORDER:
-    ax.plot(ai_trend.index, ai_trend[label], marker="o", linewidth=2,
-            color=LABEL_COLORS[label], label=label.replace("_", " ").title())
-ax.set_title("Proportion of Posts Mentioning AI: by Label and Year", fontsize=13)
+    if label not in ai_trend.columns:
+        continue
+    y_vals = ai_trend[label].fillna(0).values
+    color  = AI_TREND_COLORS[label]
+    ax.plot(x_pos, y_vals, marker="^", markersize=8, linewidth=2.5,
+            color=color, label=label.replace("_", " ").title(), zorder=3)
+    ax.fill_between(x_pos, y_vals, alpha=0.10, color=color, zorder=1)
+
+    # Highlight peak
+    peak_idx = int(y_vals.argmax())
+    peak_y   = y_vals[peak_idx]
+    ax.scatter([x_pos[peak_idx]], [peak_y], s=180, color=color, zorder=5,
+               marker="*", edgecolors='white', linewidths=0.8)
+    ax.annotate(
+        f"{peak_y:.0%}",
+        xy=(x_pos[peak_idx], peak_y),
+        xytext=(0, 14), textcoords="offset points",
+        ha='center', va='bottom', fontsize=9, fontweight='bold', color=color,
+        arrowprops=dict(arrowstyle='->', color=color, lw=1.2)
+    )
+
+ax.set_xticks(x_pos)
+ax.set_xticklabels(x_labels)
+ax.set_title("Proportion of Posts Mentioning AI: by Label and Year",
+             fontsize=13, fontweight='bold')
 ax.set_xlabel("Year")
 ax.set_ylabel("Proportion of posts with AI mention")
 ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
 ax.legend(title="Label")
 ax.grid(axis="y", linewidth=0.5, alpha=0.5)
+ax.spines[['top', 'right']].set_visible(False)
 plt.tight_layout()
 plt.savefig("image/sentiment/ai_mention_trend.png", dpi=150)
 plt.close()

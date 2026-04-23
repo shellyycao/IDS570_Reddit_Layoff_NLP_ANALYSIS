@@ -8,9 +8,10 @@ import pickle
 import numpy as np
 import pandas as pd
 
-MDL_DIR  = "models"
-IN_DIR   = os.path.join("processed", "classification")
-OUT_FILE = os.path.join("processed", "classification", "layoffs_predictions.csv")
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MDL_DIR  = os.path.join(ROOT_DIR, "models")
+IN_DIR   = os.path.join(ROOT_DIR, "processed", "classification")
+OUT_FILE = os.path.join(ROOT_DIR, "processed", "classification", "layoffs_predictions.csv")
 
 LABEL_MAP_INV = {0: "personal_experience", 1: "media_public", 2: "worker_perspective"}
 LABEL_MAP     = {v: k for k, v in LABEL_MAP_INV.items()}
@@ -22,7 +23,7 @@ def main():
         winner = f.read().strip()
     print(f"Best model: {winner}")
 
-    full_df = pd.read_csv(os.path.join("processed", "text_tfidf.csv"))
+    full_df = pd.read_csv(os.path.join(ROOT_DIR, "processed", "text_tfidf.csv"))
 
     if winner == "TF-IDF":
         with open(os.path.join(MDL_DIR, "model_tfidf_lr.pkl"), "rb") as f:
@@ -35,8 +36,8 @@ def main():
     else:  # BERT — embeddings only exist for the 2532 matched rows
         with open(os.path.join(MDL_DIR, "model_bert_lr.pkl"), "rb") as f:
             model = pickle.load(f)
-        bert_meta = pd.read_csv(os.path.join("processed", "bert", "bert_metadata.csv"))
-        bert_emb  = np.load(os.path.join("processed", "bert", "bert_embeddings.npy"))
+        bert_meta = pd.read_csv(os.path.join(ROOT_DIR, "processed", "bert", "bert_metadata.csv"))
+        bert_emb  = np.load(os.path.join(ROOT_DIR, "processed", "bert", "bert_embeddings.npy"))
 
         # Predict for matched rows; leave others as NaN
         bert_preds = model.predict(bert_emb)

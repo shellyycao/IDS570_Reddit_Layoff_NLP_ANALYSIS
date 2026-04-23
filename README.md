@@ -1,19 +1,19 @@
 # IDS 570: Layoffs on Reddit — Computational Discourse Analysis
 
 **Course:** IDS 570 — Natural Language Processing
-**Dataset:** Reddit posts & comments scraped from 9 subreddits (2020–2026)
+**Dataset:** Reddit posts & comments scraped from 9 subreddits (2025–2026)
 
 ---
 
 ## Executive Summary
 
-This project applies multi-method NLP analysis to 8,123 Reddit posts from 9 subreddits (2020–2026), grouped into three discourse communities: `media_public`, `personal_experience`, and `worker_perspective`. The central finding is that the word *layoff* carries structurally distinct meanings across these communities — the media/non-media divide is cleanly recoverable by both TF-IDF (62.1% accuracy) and BERT embeddings, while the personal-experience vs. worker-perspective boundary is fuzzier, requiring lexical supervision to separate. Post-2023, worker communities grow sharply more negative as AI-attributed layoffs enter the discourse, while media communities remain institutionally neutral.
+This project applies multi-method NLP analysis to 16,160 Reddit posts and comments from 9 subreddits (2025–2026), grouped into three discourse communities: `media_public`, `personal_experience`, and `worker_perspective`. The central finding is that the word *layoff* carries structurally distinct meanings across these communities — the media/non-media divide is cleanly recoverable by both TF-IDF (62.7% accuracy) and BERT embeddings, while the personal-experience vs. worker-perspective boundary is fuzzier, requiring lexical supervision to separate. In 2025–2026, worker communities are sharply more negative as AI-attributed layoffs dominate the discourse, while media communities remain institutionally neutral.
 
 ---
 
 ## Problem Statement
 
-Online discourse about the 2020–2026 tech layoff wave splintered across communities with structurally different framing orientations — institutional reporting, personal job loss, and labor advocacy — each producing measurably different lexical, semantic, and affective signals. This project uses computational NLP methods to characterize those differences at scale.
+Online discourse about the 2025–2026 tech layoff wave splintered across communities with structurally different framing orientations — institutional reporting, personal job loss, and labor advocacy — each producing measurably different lexical, semantic, and affective signals. This project uses computational NLP methods to characterize those differences at scale.
 
 ---
 
@@ -21,7 +21,7 @@ Online discourse about the 2020–2026 tech layoff wave splintered across commun
 
 How does the meaning of the keyword *layoff* vary across three
 structurally distinct Reddit discourse communities (media/public,
-personal experience, and worker perspective) during the 2020 to 2026
+personal experience, and worker perspective) during the 2025 to 2026
 tech layoff wave?
 
 | Label | Subreddits | Framing Style |
@@ -39,7 +39,7 @@ tech layoff wave?
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  Step 1: DATA COLLECTION                                        │
-│   Reddit API → 9 subreddits → deduplicate → label (n=8,123)    │
+│   Reddit API → 9 subreddits → deduplicate → label (n=16,160)   │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
@@ -90,7 +90,7 @@ tech layoff wave?
 ### Step 1 — Data Collection
 **Purpose:** Build a labeled corpus large enough to support statistical NLP methods across three distinct communities.
 
-Reddit posts and comments were scraped from 9 subreddits using the Reddit API (`reddit_scraper_layoffs.py`), then merged and deduplicated (`combine_and_deduplicate.py`, n = 8,123). Subreddits were assigned to one of three community labels based on their primary purpose and user base. Using subreddit membership as a weak label — rather than manually annotating individual posts — is justified by the high internal coherence of Reddit communities; users self-select into forums that match their framing orientation, making community membership a reasonable proxy for discourse type (Baumgartner et al., 2020).
+Reddit posts and comments were scraped from 9 subreddits using the Reddit API (`reddit_scraper_layoffs.py`), then merged and deduplicated (`combine_and_deduplicate.py`, n = 16,160, filtered to 2025–2026). Subreddits were assigned to one of three community labels based on their primary purpose and user base. Using subreddit membership as a weak label — rather than manually annotating individual posts — is justified by the high internal coherence of Reddit communities; users self-select into forums that match their framing orientation, making community membership a reasonable proxy for discourse type (Baumgartner et al., 2020).
 
 ### Step 2 — Preprocessing
 **Purpose:** Normalize text so that downstream frequency and embedding methods operate on clean, comparable signals.
@@ -142,8 +142,8 @@ Cross-method findings were combined to assess where community differences are ro
 | TF-IDF / EDA | Subreddit membership is a reliable weak-label proxy; cosine similarity confirms distinct lexical clusters (career vs. media) |
 | NER | *AI* and *Amazon* appear across all labels; DATE entities dominate; institutional vs. insider vs. labor framing is distinct by community |
 | BERT + UMAP | Cluster 0 cleanly separates `media_public`; Clusters 1 & 2 overlap — personal experience and worker advocacy share semantic space |
-| Logistic Regression | TF-IDF LR (62.1%) outperforms BERT LR (53%); bag-of-words is stronger than contextual embeddings for this weak-label task |
-| Word2Vec Sentiment | Worker discourse peaks most negative in 2023–2024; media discourse stays institutionally neutral across the period |
+| Logistic Regression | TF-IDF LR (62.7%) outperforms BERT LR (53%); bag-of-words is stronger than contextual embeddings for this weak-label task |
+| Word2Vec Sentiment | Worker discourse is most negative throughout 2025–2026; media discourse stays institutionally neutral across the period |
 | AI + Layoff Extension | Posts mentioning both AI and layoff terms are more negative than the corpus baseline; strongest effect in `worker_perspective` |
 
 ---
@@ -162,7 +162,7 @@ Cross-method findings were combined to assess where community differences are ro
 
 ![cosine similarity heatmap](image/eda/cosine_similarity_heatmap.png)
 
-**Post volume over time.** Discourse spikes in 2022–2024 align with high-profile tech layoff announcements, confirming that all three communities are responding to the same real-world events.
+**Post volume over time.** Volume is concentrated in 2025–2026, covering the peak of AI-driven layoff discourse, with 2026 showing the highest density (9,176 rows) across all communities.
 
 ![volume by period](image/eda/volume_by_period.png)
 
@@ -218,7 +218,7 @@ Cross-method findings were combined to assess where community differences are ro
 
 ### Classification
 
-**Confusion matrices: TF-IDF LR (62.1%) vs. BERT LR (53%).** TF-IDF outperforms BERT because surface vocabulary is more discriminative than contextual meaning when labels are defined by community norms. Both models show the same systematic confusion between `personal_experience` and `worker_perspective`.
+**Confusion matrices: TF-IDF LR (62.7%) vs. BERT LR (53%).** TF-IDF outperforms BERT because surface vocabulary is more discriminative than contextual meaning when labels are defined by community norms. Both models show the same systematic confusion between `personal_experience` and `worker_perspective`.
 
 | TF-IDF Logistic Regression | BERT Logistic Regression |
 |---|---|
@@ -242,11 +242,11 @@ Cross-method findings were combined to assess where community differences are ro
 
 ![mean sentiment by label](image/sentiment/bar_mean_compound_by_label.png)
 
-**Sentiment over time by label.** Worker community sentiment sharply declines post-2023, coinciding with the wave of AI-attributed layoffs, while media community sentiment remains flat.
+**Sentiment over time by label.** Worker community sentiment remains the most negative throughout 2025–2026, coinciding with the wave of AI-attributed layoffs, while media community sentiment remains flat.
 
 ![sentiment over time](image/sentiment/sentiment_over_time.png)
 
-**Post volume over time by label and subreddit.** Discourse spikes in 2022–2023 across all communities, confirming cross-community exposure to the same events.
+**Post volume over time by label and subreddit.** Discourse is concentrated in 2025–2026 across all communities, reflecting the ongoing AI-driven layoff wave.
 
 | By Label | By Subreddit |
 |---|---|
@@ -280,7 +280,7 @@ https://github.com/user-attachments/assets/0d3795fb-a267-4873-8809-667c88b401af
 
 ## Central Claim
 
-The word *layoff* carries structurally distinct meanings across Reddit communities. The media/non-media split is cleanly recoverable by both BERT and TF-IDF. The personal-experience vs. worker-perspective boundary is fuzzier — shared semantic vocabulary requires lexical supervision to distinguish. Post-2023, AI becomes explicit in discourse; worker communities sharpen negatively while media remains neutral.
+The word *layoff* carries structurally distinct meanings across Reddit communities. The media/non-media split is cleanly recoverable by both BERT and TF-IDF. The personal-experience vs. worker-perspective boundary is fuzzier — shared semantic vocabulary requires lexical supervision to distinguish. In 2025–2026, AI is central to discourse across all communities; worker communities are sharply more negative while media remains institutionally neutral.
 
 ---
 

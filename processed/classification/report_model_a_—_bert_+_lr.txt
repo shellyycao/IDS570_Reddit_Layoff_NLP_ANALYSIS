@@ -1,13 +1,13 @@
 Model A — BERT + LR
 =======================================================
-Accuracy: 0.5266
+Accuracy: 0.5522
 
                      precision    recall  f1-score   support
 
-personal_experience       0.60      0.61      0.60       223
-       media_public       0.58      0.66      0.62       152
- worker_perspective       0.29      0.24      0.27       132
+personal_experience       0.74      0.59      0.65       635
+       media_public       0.37      0.51      0.43        90
+ worker_perspective       0.36      0.49      0.42       280
 
-           accuracy                           0.53       507
-          macro avg       0.49      0.50      0.49       507
-       weighted avg       0.51      0.53      0.52       507
+           accuracy                           0.55      1005
+          macro avg       0.49      0.53      0.50      1005
+       weighted avg       0.60      0.55      0.57      1005

@@ -7,9 +7,10 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 
-EMB_FILE  = os.path.join("processed", "bert", "bert_embeddings.npy")
-META_FILE = os.path.join("processed", "bert", "bert_metadata.csv")
-OUT_FILE  = os.path.join("processed", "bert", "bert_clusters.csv")
+ROOT_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EMB_FILE  = os.path.join(ROOT_DIR, "processed", "bert", "bert_embeddings.npy")
+META_FILE = os.path.join(ROOT_DIR, "processed", "bert", "bert_metadata.csv")
+OUT_FILE  = os.path.join(ROOT_DIR, "processed", "bert", "bert_clusters.csv")
 
 K = 3
 RANDOM_STATE = 42

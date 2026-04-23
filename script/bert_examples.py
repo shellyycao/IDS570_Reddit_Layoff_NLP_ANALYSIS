@@ -9,9 +9,10 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import euclidean_distances
 
-EMB_FILE     = os.path.join("processed", "bert", "bert_embeddings.npy")
-CLUSTER_FILE = os.path.join("processed", "bert", "bert_clusters.csv")
-OUT_FILE     = os.path.join("processed", "bert", "bert_cluster_examples.csv")
+ROOT_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EMB_FILE     = os.path.join(ROOT_DIR, "processed", "bert", "bert_embeddings.npy")
+CLUSTER_FILE = os.path.join(ROOT_DIR, "processed", "bert", "bert_clusters.csv")
+OUT_FILE     = os.path.join(ROOT_DIR, "processed", "bert", "bert_cluster_examples.csv")
 
 K            = 3
 TOP_N        = 3

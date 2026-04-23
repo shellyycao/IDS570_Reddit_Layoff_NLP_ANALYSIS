@@ -12,9 +12,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import umap
 
-EMB_FILE    = os.path.join("processed", "bert", "bert_embeddings.npy")
-CLUSTER_FILE = os.path.join("processed", "bert", "bert_clusters.csv")
-OUT_IMAGE   = os.path.join("image", "bert", "bert_umap.png")
+ROOT_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EMB_FILE     = os.path.join(ROOT_DIR, "processed", "bert", "bert_embeddings.npy")
+CLUSTER_FILE = os.path.join(ROOT_DIR, "processed", "bert", "bert_clusters.csv")
+OUT_IMAGE    = os.path.join(ROOT_DIR, "image", "bert", "bert_umap.png")
 
 LABEL_ORDER  = ["personal_experience", "media_public", "worker_perspective"]
 RANDOM_STATE = 42
